@@ -13,6 +13,7 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 import com.sun.jna.ptr.IntByReference;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Arrays;
 import java.lang.RuntimeException;
@@ -252,8 +253,8 @@ public class Capstone {
 
   private interface CS extends Library {
     public int cs_open(int arch, int mode, NativeLongByReference handle);
-    public NativeLong cs_disasm(NativeLong handle, byte[] code, NativeLong code_len,
-        long addr, NativeLong count, PointerByReference insn);
+    public NativeLong cs_disasm(NativeLong handle, ByteBuffer code, NativeLong code_len,
+                                long addr, NativeLong count, PointerByReference insn);
     public void cs_free(Pointer p, NativeLong count);
     public int cs_close(NativeLongByReference handle);
     public int cs_option(NativeLong handle, int option, NativeLong optionValue);
@@ -438,7 +439,7 @@ public class Capstone {
    * @param address The address of the first machine code byte.
    * @return the array of successfully disassembled instructions, empty if no instruction could be disassembled.
    */
-  public CsInsn[] disasm(byte[] code, long address) {
+  public CsInsn[] disasm(ByteBuffer code, long address) {
     return disasm(code, address, 0);
   }
 
@@ -451,10 +452,10 @@ public class Capstone {
    * @param count The maximum number of instructions to disassemble, 0 for no maximum.
    * @return the array of successfully disassembled instructions, empty if no instruction could be disassembled.
    */
-  public CsInsn[] disasm(byte[] code, long address, long count) {
+  public CsInsn[] disasm(ByteBuffer code, long address, long count) {
     PointerByReference insnRef = new PointerByReference();
 
-    NativeLong c = cs.cs_disasm(ns.csh, code, new NativeLong(code.length), address, new NativeLong(count), insnRef);
+    NativeLong c = cs.cs_disasm(ns.csh, code, new NativeLong(code.remaining()), address, new NativeLong(count), insnRef);
     
     if (0 == c.intValue()) {
     	return EMPTY_INSN;
